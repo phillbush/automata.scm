@@ -25,6 +25,5 @@
 ; To run a dfa on a string, just check if the result of left-folding the
 ; nextstate procedure on that string from its initial state results in a
 ; final state.
-(define (dfa-run dfa string) ((isfinal dfa) (fold-left (nextstate dfa)
-                                                       (initstate dfa)
-                                                       string)))
+(define (dfa-run dfa string)
+  ((isfinal dfa) (fold-left (nextstate dfa) (initstate dfa) string)))
