@@ -2,12 +2,12 @@
 
 Implementation of Deterministic Finite Automata (DFAs) on r7rs scheme.
 
-The file ./automata contains the implementation of the procedures to
+The file ./automata.scm contains the implementation of the procedures to
 make a DFA (make-dfa) and run it on a string (dfa-run).
 
-The file ./exempla contains examples of DFAs implemented using the
-procedures of the other file.  It is an executable file; when run,
-it computes those DFAs on a set of strings.
+The file ./exempla.scm contains examples of DFAs implemented using the
+procedures of the other file.  This is an executable file; when run, it
+computes those DFAs on a set of strings.
 
 TODO:
 • Implement NFAs.
