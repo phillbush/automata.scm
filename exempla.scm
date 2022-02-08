@@ -26,8 +26,7 @@
             ((and (eq? state 'q2) (eq? symbol #\0)) 'q2)
             ((and (eq? state 'q2) (eq? symbol #\1)) 'q1)
             ((and (eq? state 'q3) (eq? symbol #\0)) 'q3)
-            ((and (eq? state 'q3) (eq? symbol #\1)) 'q3)
-            (else #f)))))
+            ((and (eq? state 'q3) (eq? symbol #\1)) 'q3)))))
 
 ; This DFA recognizes the language of string with at least three 1's
 (define has-three-1s
@@ -42,8 +41,7 @@
             ((and (eq? state 'q2) (eq? symbol #\0)) 'q2)
             ((and (eq? state 'q2) (eq? symbol #\1)) 'q3)
             ((and (eq? state 'q3) (eq? symbol #\0)) 'q3)
-            ((and (eq? state 'q3) (eq? symbol #\1)) 'q3)
-            (else #f)))))
+            ((and (eq? state 'q3) (eq? symbol #\1)) 'q3)))))
 
 ; This DFA recognizes the language of strings which does not have the
 ; substring "110" in it.
@@ -62,8 +60,7 @@
             ((and (eq? state 'q2) (eq? symbol #\0)) 'q3)
             ((and (eq? state 'q2) (eq? symbol #\1)) 'q2)
             ((and (eq? state 'q3) (eq? symbol #\0)) 'q3)
-            ((and (eq? state 'q3) (eq? symbol #\1)) 'q3)
-            (else #f)))))
+            ((and (eq? state 'q3) (eq? symbol #\1)) 'q3)))))
 
 ; This NFA recognizes the language of strings whose third-to-last symbol is 1
 (define third-to-last-is-1
@@ -77,7 +74,7 @@
             ((and (eq? state 'q1) (eq? symbol #\1)) (list 'q2))
             ((and (eq? state 'q2) (eq? symbol #\0)) (list 'q3))
             ((and (eq? state 'q2) (eq? symbol #\1)) (list 'q3))
-            (else #f)))))
+            (else '())))))
 
 ; This NFA recognizes the language of strings of k zeroes, where k is a
 ; multiple of 2 or 3
@@ -92,7 +89,7 @@
             ((and (eq? state 'q3) (eq? symbol #\0)) (list 'q4))
             ((and (eq? state 'q4) (eq? symbol #\0)) (list 'q5))
             ((and (eq? state 'q5) (eq? symbol #\0)) (list 'q3))
-            (else #f)))))
+            (else '())))))
 
 ; a test function
 (define (test dfa-name dfa)

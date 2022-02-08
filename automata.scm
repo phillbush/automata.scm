@@ -1,9 +1,5 @@
 (import (srfi 1))               ; for fold, any, filter, etc
 
-; srfi 1 should have a flatmap...
-(define (flatmap proc seq)
-  (fold-right append '() (map proc seq)))
-
 ; selectors
 (define (automaton-type automaton) (car automaton))
 (define (initstate automaton) (cadr automaton))
@@ -28,18 +24,19 @@
 ; run automaton
 (define (automaton-run automaton string)
 
-  (define (dfa-run automaton string)
+  (define (dfa-run)
     ((isfinal automaton)
      (fold (nextstate automaton) (initstate automaton) (string->list string))))
 
   (define (nfa-step symbol states)
-    (filter
-      (lambda (x) x)
-      (flatmap
+    (apply
+      lset-union
+      eq?
+      (map
         (lambda (state) ((nextstates automaton) symbol state))
         states)))
 
-  (define (nfa-run automaton string)
+  (define (nfa-run)
     (any
       (isfinal automaton)
       (fold
@@ -49,5 +46,5 @@
         (list (initstate automaton))
         (string->list string))))
 
-  (cond ((eq? (automaton-type automaton) 'dfa) (dfa-run automaton string))
-        ((eq? (automaton-type automaton) 'nfa) (nfa-run automaton string))))
+  (cond ((eq? (automaton-type automaton) 'dfa) (dfa-run))
+        ((eq? (automaton-type automaton) 'nfa) (nfa-run))))
