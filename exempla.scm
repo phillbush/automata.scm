@@ -103,7 +103,7 @@
           (display dfa-name)
           (display " on ")
           (display (car rest))
-          (display ":	")
+          (display ":\t")
           (display (if (automaton-run dfa (car rest)) "accept" "reject"))
           (newline)
           (iter (cdr rest)))))
