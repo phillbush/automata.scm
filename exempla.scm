@@ -16,17 +16,17 @@
 ; ending with 0.  All our states are symbols like 'qx.
 (define start-1-end-0
   (make-dfa
-    'qs
-    (lambda (state) (eq? state 'q0))
+    'q0
+    (lambda (state) (eq? state 'q2))
     (lambda (symbol state)
-      (cond ((and (eq? state 'qs) (eq? symbol #\0)) 'qe)
-            ((and (eq? state 'qs) (eq? symbol #\1)) 'q1)
-            ((and (eq? state 'q1) (eq? symbol #\0)) 'q0)
-            ((and (eq? state 'q1) (eq? symbol #\1)) 'q1)
-            ((and (eq? state 'q0) (eq? symbol #\0)) 'q0)
+      (cond ((and (eq? state 'q0) (eq? symbol #\0)) 'q3)
             ((and (eq? state 'q0) (eq? symbol #\1)) 'q1)
-            ((and (eq? state 'qe) (eq? symbol #\0)) 'qe)
-            ((and (eq? state 'qe) (eq? symbol #\1)) 'qe)
+            ((and (eq? state 'q1) (eq? symbol #\0)) 'q2)
+            ((and (eq? state 'q1) (eq? symbol #\1)) 'q1)
+            ((and (eq? state 'q2) (eq? symbol #\0)) 'q2)
+            ((and (eq? state 'q2) (eq? symbol #\1)) 'q1)
+            ((and (eq? state 'q3) (eq? symbol #\0)) 'q3)
+            ((and (eq? state 'q3) (eq? symbol #\1)) 'q3)
             (else #f)))))
 
 ; This DFA recognizes the language of string with at least three 1's
