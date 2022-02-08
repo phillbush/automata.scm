@@ -12,4 +12,4 @@ The file ./exempla.scm contains examples of DFAs and NFAs implemented
 using the procedures of the other file.   This is an executable file;
 when run, it computes those automata on a set of predefined strings.
 
-Public license.
+Public domain.
