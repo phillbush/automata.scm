@@ -11,17 +11,17 @@
 (define (nextstate automaton) (cadddr automaton))
 (define (nextstates automaton) (cadddr automaton))
 
-; A Deterministic Finite Automaton (DFA) is made of three elements:
+; A Deterministic Finite Automaton (DFA) is constructed from three
+; elements:
 ; - An initial state.
 ; - A procedure that determines whether a given state is a final state.
 ; - A procedure that, given a state and a symbol, gets the next state.
 (define (make-dfa initstate isfinal nextstate)
   (list 'dfa initstate isfinal nextstate))
 
-; A Deterministic Finite Automaton (DFA) is made of three elements:
-; - An initial state.
-; - A procedure that determines whether a given state is a final state.
-; - A procedure that, given a state and a symbol, gets a list of next states.
+; A Nondeterministic Finite Automaton (NFA) is just like a DFA, but the
+; third element (nextstates) returns a list of next states given a state
+; and either a symbol or nil.
 (define (make-nfa initstate isfinal nextstates)
   (list 'nfa initstate isfinal nextstates))
 

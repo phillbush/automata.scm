@@ -104,7 +104,7 @@
           (display " on ")
           (display (car rest))
           (display ":	")
-          (display (if (automaton-run dfa (car rest)) "true" "false"))
+          (display (if (automaton-run dfa (car rest)) "accept" "reject"))
           (newline)
           (iter (cdr rest)))))
   (iter strings))
