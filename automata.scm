@@ -1,6 +1,8 @@
 (import (srfi 1)                ; for fold
         (srfi 113))             ; for set, set-union set-any
 
+(define (make-set . list) (apply set eq? list))
+
 ; selectors
 (define (automaton-type automaton) (car automaton))
 (define (initstate automaton) (cadr automaton))
@@ -32,7 +34,7 @@
   (define (nfa-step symbol states)
     (set-fold
       set-union
-      (set eq?)
+      (make-set)
       (set-map
         eq?
         (lambda (state) ((nextstates automaton) symbol state))
@@ -45,7 +47,7 @@
         (lambda (symbol states)
           (let ((states (set-union states (nfa-step '() states))))
             (nfa-step symbol states)))
-        (set eq? (initstate automaton))
+        (make-set (initstate automaton))
         (string->list string))))
 
   (cond ((eq? (automaton-type automaton) 'dfa) (dfa-run))
