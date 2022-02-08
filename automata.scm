@@ -29,9 +29,9 @@
      (fold (nextstate automaton) (initstate automaton) (string->list string))))
 
   (define (nfa-step symbol states)
-    (apply
-      lset-union
-      eq?
+    (reduce
+      append
+      '()
       (map
         (lambda (state) ((nextstates automaton) symbol state))
         states)))
@@ -41,7 +41,7 @@
       (isfinal automaton)
       (fold
         (lambda (symbol states)
-          (let ((states (lset-union eq? states (nfa-step '() states))))
+          (let ((states (reduce append '() (list states (nfa-step '() states)))))
             (nfa-step symbol states)))
         (list (initstate automaton))
         (string->list string))))
