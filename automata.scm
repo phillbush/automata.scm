@@ -1,4 +1,5 @@
-(import (srfi 1))               ; for fold, any, filter, etc
+(import (srfi 1)                ; for fold
+        (srfi 113))             ; for set, set-union set-any
 
 ; selectors
 (define (automaton-type automaton) (car automaton))
@@ -29,21 +30,22 @@
      (fold (nextstate automaton) (initstate automaton) (string->list string))))
 
   (define (nfa-step symbol states)
-    (apply
-      lset-union
-      eq?
-      (map
+    (set-fold
+      set-union
+      (set eq?)
+      (set-map
+        eq?
         (lambda (state) ((nextstates automaton) symbol state))
         states)))
 
   (define (nfa-run)
-    (any
+    (set-any?
       (isfinal automaton)
       (fold
         (lambda (symbol states)
-          (let ((states (lset-union eq? states (nfa-step '() states))))
+          (let ((states (set-union states (nfa-step '() states))))
             (nfa-step symbol states)))
-        (list (initstate automaton))
+        (set eq? (initstate automaton))
         (string->list string))))
 
   (cond ((eq? (automaton-type automaton) 'dfa) (dfa-run))

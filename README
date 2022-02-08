@@ -1,8 +1,8 @@
                               automata.scm
 
 Implementation of both Deterministic Finite Automata (DFAs) and
-Nondeterministic Finite Automata (NFAs) on r7rs scheme, using only
-SRFI 1.
+Nondeterministic Finite Automata (NFAs) on r7rs scheme, using
+SRFI 1 and SRFI 113.
 
 The file ./automata.scm contains the implementation of the procedures
 to make a DFA (make-dfa), make a NFA (make-nfa) and run either one on
