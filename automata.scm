@@ -84,9 +84,7 @@
 
   (let ((state-count 0))
     (define (rec expr)
-      (cond ((null? expr)
-             (make-prototype state-count empty-string (make-set)))
-            ((not (pair? expr))
+      (cond ((or (is-empty-string? expr) (not (pair? expr)))
              (let ((initial state-count)
                    (final (+ state-count 1)))
                (set! state-count (+ state-count 2))
