@@ -1,5 +1,5 @@
 (import (srfi 1)                ; for fold
-        (srfi 113))             ; for set, set-union set-any
+        (srfi 113))             ; for set, set-union, and set-any
 
 (define (make-set . list) (apply set eq? list))
 (define empty-string '())
