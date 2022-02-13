@@ -2,6 +2,8 @@
         (srfi 113))             ; for set, set-union set-any
 
 (define (make-set . list) (apply set eq? list))
+(define empty-string '())
+(define (is-empty-string? s) (null? s))
 
 ; selectors
 (define (automaton-type automaton) (car automaton))
@@ -24,6 +26,15 @@
 (define (make-nfa initstate isfinal nextstates)
   (list 'nfa initstate isfinal nextstates))
 
+; regular expression
+(define (make-union left right)  (list 'union left right))
+(define (make-cat left right)  (list 'cat left right))
+(define (make-star arg)  (list 'star arg))
+(define (regexp-op regexp) (car regexp))
+(define (regexp-arg regexp) (cadr regexp))
+(define (regexp-left regexp) (cadr regexp))
+(define (regexp-right regexp) (caddr regexp))
+
 ; run automaton
 (define (automaton-run automaton string)
 
@@ -41,20 +52,119 @@
         states)))
 
   (define (nfa-path symbol states)
-    (if (not (null? symbol))
-        (nfa-step symbol (set-union states (nfa-path '() states)))
+    (if (not (is-empty-string? symbol))
+        (nfa-step symbol (set-union states (nfa-path empty-string states)))
         (let ((newstates (nfa-step symbol states)))
           (if (set-empty? newstates)
               states
-              (nfa-path symbol newstates)))))
+              (set-union states (nfa-path symbol newstates))))))
 
   (define (nfa-run)
     (set-any?
       (isfinal automaton)
-      (fold
-        nfa-path
-        (make-set (initstate automaton))
-        (string->list string))))
+      (nfa-path empty-string
+        (fold
+          nfa-path
+          (make-set (initstate automaton))
+          (string->list string)))))
 
   (cond ((eq? (automaton-type automaton) 'dfa) (dfa-run))
         ((eq? (automaton-type automaton) 'nfa) (nfa-run))))
+
+(define (regexp->nfa regexp)
+  (define (make-automata initial final transitions) (list initial final transitions))
+  (define (automata-initial automata) (car automata))
+  (define (automata-final automata) (cadr automata))
+  (define (automata-transitions automata) (caddr automata))
+
+  (define (make-transition state symbol final) (list state symbol final))
+  (define (trans-state transition) (car transition))
+  (define (trans-symbol transition) (cadr transition))
+  (define (trans-final transition) (caddr transition))
+
+  (let ((state-count 0))
+    (define (rec expr)
+      (cond ((null? expr)
+             (make-automata state-count empty-string (make-set)))
+            ((not (pair? expr))
+             (let ((initial state-count)
+                   (final (+ state-count 1)))
+               (set! state-count (+ state-count 2))
+               (make-automata
+                 initial
+                 final
+                 (list (make-transition initial expr (make-set final))))))
+            ((eq? (regexp-op expr) 'star)
+             (let* ((arg (rec (regexp-arg expr)))
+                    (initial state-count)
+                    (final (+ state-count 1)))
+               (set! state-count (+ state-count 2))
+               (make-automata
+                 initial
+                 final
+                 (append
+                   (automata-transitions arg)
+                   (list
+                     (make-transition initial
+                                      empty-string
+                                      (make-set (automata-initial arg) final))
+                     (make-transition (automata-final arg)
+                                      empty-string
+                                      (make-set (automata-initial arg) final)))))))
+            (else
+             (let ((op (regexp-op expr))
+                   (left (rec (regexp-left expr)))
+                   (right (rec (regexp-right expr))))
+               (cond
+                 ((eq? 'cat op)
+                  (make-automata
+                    (automata-initial left)
+                    (automata-final right)
+                    (append
+                      (automata-transitions left)
+                      (automata-transitions right)
+                      (list
+                        (make-transition
+                          (automata-final left)
+                          empty-string
+                          (make-set (automata-initial right)))))))
+                 ((eq? 'union op)
+                  (let ((initial state-count)
+                        (final (+ state-count 1)))
+                    (set! state-count (+ state-count 2))
+                    (make-automata
+                      initial
+                      final
+                      (append
+                        (automata-transitions left)
+                        (automata-transitions right)
+                        (list
+                          (make-transition
+                            initial
+                            empty-string
+                            (make-set
+                              (automata-initial left)
+                              (automata-initial right)))
+                          (make-transition
+                            (automata-final left)
+                            empty-string
+                            (make-set final))
+                          (make-transition
+                            (automata-final right)
+                            empty-string
+                            (make-set final))))))))))))
+    (define (next list)
+      (lambda (symbol state)
+        (if (null? list)
+            (make-set)
+            (let ((trans (car list))
+                  (rest (cdr list)))
+              (if (and (eq? (trans-symbol trans) symbol)
+                       (eq? (trans-state trans) state))
+                  (trans-final trans)
+                  ((next rest) symbol state))))))
+    (let ((automata (rec regexp)))
+      (make-nfa
+        (automata-initial automata)
+        (lambda (state) (eq? state (automata-final automata)))
+        (next (automata-transitions automata))))))
