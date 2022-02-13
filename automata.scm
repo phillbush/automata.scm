@@ -40,13 +40,19 @@
         (lambda (state) ((nextstates automaton) symbol state))
         states)))
 
+  (define (nfa-path symbol states)
+    (if (not (null? symbol))
+        (nfa-step symbol (set-union states (nfa-path '() states)))
+        (let ((newstates (nfa-step symbol states)))
+          (if (set-empty? newstates)
+              states
+              (nfa-path symbol newstates)))))
+
   (define (nfa-run)
     (set-any?
       (isfinal automaton)
       (fold
-        (lambda (symbol states)
-          (let ((states (set-union states (nfa-step '() states))))
-            (nfa-step symbol states)))
+        nfa-path
         (make-set (initstate automaton))
         (string->list string))))
 
