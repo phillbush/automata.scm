@@ -12,8 +12,7 @@
     "10010"))
 
 ; This regular expression creates a NFA which recognizes the language of
-; strings beginning with 1 and ending with 0.  All our states are
-; numbers.
+; strings beginning with 1 and ending with 0.
 (define start-1-end-0
   (regexp->nfa
     (make-cat #\1 (make-cat (make-star (make-union #\0 #\1)) #\0))))
@@ -110,7 +109,7 @@
   (iter strings))
 
 (define (main args)
-  ; regexps
+  ; NFAs generated from regexps
   (test "start-1-end-0" start-1-end-0)
   (test "third-to-last-is-1" third-to-last-is-1)
 
