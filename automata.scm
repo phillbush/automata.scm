@@ -72,25 +72,25 @@
         ((eq? (automaton-type automaton) 'nfa) (nfa-run))))
 
 (define (regexp->nfa regexp)
-  (define (make-automata initial final transitions) (list initial final transitions))
-  (define (automata-initial automata) (car automata))
-  (define (automata-final automata) (cadr automata))
-  (define (automata-transitions automata) (caddr automata))
+  (define (make-prototype initial final transitions) (list initial final transitions))
+  (define (prototype-initial prototype) (car prototype))
+  (define (prototype-final prototype) (cadr prototype))
+  (define (prototype-transitions prototype) (caddr prototype))
 
   (define (make-transition state symbol final) (list state symbol final))
-  (define (trans-state transition) (car transition))
-  (define (trans-symbol transition) (cadr transition))
-  (define (trans-final transition) (caddr transition))
+  (define (transition-state transition) (car transition))
+  (define (transition-symbol transition) (cadr transition))
+  (define (transition-final transition) (caddr transition))
 
   (let ((state-count 0))
     (define (rec expr)
       (cond ((null? expr)
-             (make-automata state-count empty-string (make-set)))
+             (make-prototype state-count empty-string (make-set)))
             ((not (pair? expr))
              (let ((initial state-count)
                    (final (+ state-count 1)))
                (set! state-count (+ state-count 2))
-               (make-automata
+               (make-prototype
                  initial
                  final
                  (list (make-transition initial expr (make-set final))))))
@@ -99,58 +99,58 @@
                     (initial state-count)
                     (final (+ state-count 1)))
                (set! state-count (+ state-count 2))
-               (make-automata
+               (make-prototype
                  initial
                  final
                  (append
-                   (automata-transitions arg)
+                   (prototype-transitions arg)
                    (list
                      (make-transition initial
                                       empty-string
-                                      (make-set (automata-initial arg) final))
-                     (make-transition (automata-final arg)
+                                      (make-set (prototype-initial arg) final))
+                     (make-transition (prototype-final arg)
                                       empty-string
-                                      (make-set (automata-initial arg) final)))))))
+                                      (make-set (prototype-initial arg) final)))))))
             (else
              (let ((op (regexp-op expr))
                    (left (rec (regexp-left expr)))
                    (right (rec (regexp-right expr))))
                (cond
                  ((eq? 'cat op)
-                  (make-automata
-                    (automata-initial left)
-                    (automata-final right)
+                  (make-prototype
+                    (prototype-initial left)
+                    (prototype-final right)
                     (append
-                      (automata-transitions left)
-                      (automata-transitions right)
+                      (prototype-transitions left)
+                      (prototype-transitions right)
                       (list
                         (make-transition
-                          (automata-final left)
+                          (prototype-final left)
                           empty-string
-                          (make-set (automata-initial right)))))))
+                          (make-set (prototype-initial right)))))))
                  ((eq? 'union op)
                   (let ((initial state-count)
                         (final (+ state-count 1)))
                     (set! state-count (+ state-count 2))
-                    (make-automata
+                    (make-prototype
                       initial
                       final
                       (append
-                        (automata-transitions left)
-                        (automata-transitions right)
+                        (prototype-transitions left)
+                        (prototype-transitions right)
                         (list
                           (make-transition
                             initial
                             empty-string
                             (make-set
-                              (automata-initial left)
-                              (automata-initial right)))
+                              (prototype-initial left)
+                              (prototype-initial right)))
                           (make-transition
-                            (automata-final left)
+                            (prototype-final left)
                             empty-string
                             (make-set final))
                           (make-transition
-                            (automata-final right)
+                            (prototype-final right)
                             empty-string
                             (make-set final))))))))))))
     (define (next list)
@@ -159,12 +159,12 @@
             (make-set)
             (let ((trans (car list))
                   (rest (cdr list)))
-              (if (and (eq? (trans-symbol trans) symbol)
-                       (eq? (trans-state trans) state))
-                  (trans-final trans)
+              (if (and (eq? (transition-symbol trans) symbol)
+                       (eq? (transition-state trans) state))
+                  (transition-final trans)
                   ((next rest) symbol state))))))
-    (let ((automata (rec regexp)))
+    (let ((prototype (rec regexp)))
       (make-nfa
-        (automata-initial automata)
-        (lambda (state) (eq? state (automata-final automata)))
-        (next (automata-transitions automata))))))
+        (prototype-initial prototype)
+        (lambda (state) (eq? state (prototype-final prototype)))
+        (next (prototype-transitions prototype))))))
