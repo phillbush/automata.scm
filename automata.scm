@@ -109,48 +109,47 @@
                      (make-transition (prototype-final arg)
                                       empty-string
                                       (make-set (prototype-initial arg) final)))))))
-            (else
-             (let ((op (regexp-op expr))
-                   (left (rec (regexp-left expr)))
+            ((eq? (regexp-op expr) 'cat)
+             (let ((left (rec (regexp-left expr)))
                    (right (rec (regexp-right expr))))
-               (cond
-                 ((eq? 'cat op)
-                  (make-prototype
-                    (prototype-initial left)
-                    (prototype-final right)
-                    (append
-                      (prototype-transitions left)
-                      (prototype-transitions right)
-                      (list
-                        (make-transition
-                          (prototype-final left)
-                          empty-string
-                          (make-set (prototype-initial right)))))))
-                 ((eq? 'union op)
-                  (let ((initial state-count)
-                        (final (+ state-count 1)))
-                    (set! state-count (+ state-count 2))
-                    (make-prototype
-                      initial
-                      final
-                      (append
-                        (prototype-transitions left)
-                        (prototype-transitions right)
-                        (list
-                          (make-transition
-                            initial
-                            empty-string
-                            (make-set
-                              (prototype-initial left)
-                              (prototype-initial right)))
-                          (make-transition
-                            (prototype-final left)
-                            empty-string
-                            (make-set final))
-                          (make-transition
-                            (prototype-final right)
-                            empty-string
-                            (make-set final))))))))))))
+               (make-prototype
+                 (prototype-initial left)
+                 (prototype-final right)
+                 (append
+                   (prototype-transitions left)
+                   (prototype-transitions right)
+                   (list
+                     (make-transition
+                       (prototype-final left)
+                       empty-string
+                       (make-set (prototype-initial right))))))))
+            ((eq? (regexp-op expr) 'union)
+             (let ((left (rec (regexp-left expr)))
+                   (right (rec (regexp-right expr))))
+               (let ((initial state-count)
+                     (final (+ state-count 1)))
+                 (set! state-count (+ state-count 2))
+                 (make-prototype
+                   initial
+                   final
+                   (append
+                     (prototype-transitions left)
+                     (prototype-transitions right)
+                     (list
+                       (make-transition
+                         initial
+                         empty-string
+                         (make-set
+                           (prototype-initial left)
+                           (prototype-initial right)))
+                       (make-transition
+                         (prototype-final left)
+                         empty-string
+                         (make-set final))
+                       (make-transition
+                         (prototype-final right)
+                         empty-string
+                         (make-set final))))))))))
     (define (next list)
       (lambda (symbol state)
         (if (null? list)
