@@ -3,7 +3,7 @@
 (load "automata.scm")
 
 ; Let's define some strings.
-; Our alphabet are the numbers 0 and 1.
+; Our alphabet are the characters 0 and 1.
 (define strings
   (list
     "01010"
@@ -67,7 +67,7 @@
     0
     (lambda (state) (or (eq? state 1) (eq? state 5)))
     (lambda (symbol state)
-      (cond ((and (eq? state 0) (is-empty-string? symbol)) (make-set 1 3))
+      (cond ((and (eq? state 0) (empty? symbol))  (make-set 1 3))
             ((and (eq? state 1) (eq? symbol #\0)) (make-set 2))
             ((and (eq? state 1) (eq? symbol #\1)) (make-set 1))
             ((and (eq? state 2) (eq? symbol #\0)) (make-set 1))

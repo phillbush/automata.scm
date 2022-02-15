@@ -3,7 +3,7 @@
 
 (define (make-set . list) (apply set eq? list))
 (define empty-string '())
-(define (is-empty-string? s) (null? s))
+(define (empty? s) (null? s))
 
 ; selectors
 (define (automaton-type automaton) (car automaton))
@@ -52,7 +52,7 @@
         states)))
 
   (define (nfa-path symbol states)
-    (if (not (is-empty-string? symbol))
+    (if (not (empty? symbol))
         (nfa-step symbol (set-union states (nfa-path empty-string states)))
         (let ((newstates (nfa-step symbol states)))
           (if (set-empty? newstates)
@@ -84,7 +84,7 @@
 
   (let ((state-count 0))
     (define (rec expr)
-      (cond ((or (is-empty-string? expr) (not (pair? expr)))
+      (cond ((or (empty? expr) (not (pair? expr)))
              (let ((initial state-count)
                    (final (+ state-count 1)))
                (set! state-count (+ state-count 2))
