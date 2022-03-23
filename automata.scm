@@ -67,23 +67,22 @@
         states)))
 
   (define (nfa-step symbol states)
-    (let ((nextstates (nfa-map symbol states)))
-      (if (set-empty? nextstates)
-
-          ; This is a hack.  Can I remove this if?
-          (if (eq? 'pda (automaton-type automaton))
-              nextstates
-              states)
-
-          (set-union nextstates (nfa-step empty-string nextstates)))))
+    (if (not (empty-string? symbol))
+        (nfa-map symbol (set-union states (nfa-step empty-string states)))
+        (let ((newstates (nfa-map symbol states)))
+          (if (set-empty? newstates)
+              states
+              (set-union states (nfa-step symbol newstates))))))
 
   (define (nfa-run)
     (set-any?
       (automaton-isfinal automaton)
-      (fold
-        nfa-step
-        (make-set (automaton-initstate automaton))
-        (cons empty-string (string->list string)))))
+      (nfa-step
+        empty-string
+        (fold
+          nfa-step
+          (make-set (automaton-initstate automaton))
+          (string->list string)))))
 
   ; PDAs are non-deterministic automata, and use the nfa-step and
   ; nfa-map procedures.
@@ -91,10 +90,12 @@
     (set-any?
       (lambda (transition)
         ((automaton-isfinal automaton) (transition-state transition)))
-      (fold
-        nfa-step
-        (make-set (make-transition (automaton-initstate automaton) '()))
-        (cons empty-string (string->list string)))))
+      (nfa-step
+        empty-string
+        (fold
+          nfa-step
+          (make-set (make-transition (automaton-initstate automaton) '()))
+          (string->list string)))))
 
   (cond ((eq? (automaton-type automaton) 'dfa) (dfa-run))
         ((eq? (automaton-type automaton) 'nfa) (nfa-run))
