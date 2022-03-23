@@ -142,8 +142,6 @@
                   (else
                     (make-set)))))))
 
-    ; This is an attempt to convert context-free grammars to pushdown
-    ; automata. But it's not working.
     (cons "n-zeros-n-ones"
       (cfg->pda
         (make-cfg #\S
@@ -152,7 +150,7 @@
     (cons "zeroes-and-one"
       (cfg->pda
         (make-cfg #\S
-          (make-rule #\S "0S1" "1")
+          (make-rule #\S "0T1" "1")
           (make-rule #\T "T0" ""))))
 
     ))

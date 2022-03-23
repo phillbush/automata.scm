@@ -219,7 +219,7 @@
         (make-set)
         (set-adjoin
           (transition (cdr strings) stack)
-          (make-description 1 (append (reverse (string->list (car strings))) stack)))))
+          (make-description 1 (append (string->list (car strings)) stack)))))
 
   (define (transitions rules stack)
     (cond ((null? rules) (make-set))
