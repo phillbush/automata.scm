@@ -28,9 +28,14 @@
   (list 'nfa automaton-initstate automaton-isfinal automaton-transition))
 
 ; A Pushdown Automaton (PDA) is like a NFA, but the third element
-; (automaton-transition) also manages a stack.
+; (automaton-transition) also manages a stack.  We also add some
+; constructors and selectors to handle a transition (a pair of state
+; and stack).
 (define (make-pda automaton-initstate automaton-isfinal automaton-transition)
   (list 'pda automaton-initstate automaton-isfinal automaton-transition))
+(define (make-transition state stack) (cons state stack))
+(define (transition-state transition) (car transition))
+(define (transition-stack transition) (cdr transition))
 
 ; regular expression constructors and selectors
 (define (make-union left right) (list 'union left right))
@@ -64,7 +69,12 @@
   (define (nfa-step symbol states)
     (let ((nextstates (nfa-map symbol states)))
       (if (set-empty? nextstates)
-          states
+
+          ; This is a hack.  Can I remove this if?
+          (if (eq? 'pda (automaton-type automaton))
+              nextstates
+              states)
+
           (set-union nextstates (nfa-step empty-string nextstates)))))
 
   (define (nfa-run)
@@ -75,29 +85,15 @@
         (make-set (automaton-initstate automaton))
         (cons empty-string (string->list string)))))
 
-  (define (pda-map symbol transitions)
-    (set-fold
-      set-union
-      (make-set)
-      (set-map
-        equal?
-        (lambda (transition)
-          ((automaton-transition automaton) symbol (car transition) (cdr transition)))
-        transitions)))
-
-  (define (pda-step symbol transitions)
-    (let ((nexttransitions (pda-map symbol transitions)))
-      (if (set-empty? nexttransitions)
-          (make-set)
-          (set-union nexttransitions (pda-step empty-string nexttransitions)))))
-
+  ; PDAs are non-deterministic automata, and use the nfa-step and
+  ; nfa-map procedures.
   (define (pda-run)
     (set-any?
       (lambda (transition)
-        ((automaton-isfinal automaton) (car transition)))
+        ((automaton-isfinal automaton) (transition-state transition)))
       (fold
-        pda-step
-        (make-set (cons (automaton-initstate automaton) (list '())))
+        nfa-step
+        (make-set (make-transition (automaton-initstate automaton) '()))
         (cons empty-string (string->list string)))))
 
   (cond ((eq? (automaton-type automaton) 'dfa) (dfa-run))

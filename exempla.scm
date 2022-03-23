@@ -101,19 +101,21 @@
       (make-pda
         0
         (lambda (state) (or (eq? state 0) (eq? state 3)))
-        (lambda (symbol state stack)
-          (cond ((and (eq? state 0) (empty-string? symbol))
-                 (make-set (cons 1 (cons end-symbol stack))))
-                ((and (eq? state 1) (eq? symbol #\0))
-                 (make-set (cons 1 (cons #\0 stack))))
-                ((and (eq? state 1) (eq? symbol #\1) (eq? (car stack) #\0))
-                 (make-set (cons 2 (cdr stack))))
-                ((and (eq? state 2) (eq? symbol #\1) (eq? (car stack) #\0))
-                 (make-set (cons 2 (cdr stack))))
-                ((and (eq? state 2) (empty-string? symbol) (end-symbol? (car stack)))
-                 (make-set (cons 3 (cdr stack))))
-                (else
-                  (make-set))))))
+        (lambda (symbol transition)
+          (let ((state (transition-state transition))
+                (stack (transition-stack transition)))
+            (cond ((and (eq? state 0) (empty-string? symbol))
+                   (make-set (cons 1 (cons end-symbol stack))))
+                  ((and (eq? state 1) (eq? symbol #\0))
+                   (make-set (cons 1 (cons #\0 stack))))
+                  ((and (eq? state 1) (eq? symbol #\1) (eq? (car stack) #\0))
+                   (make-set (cons 2 (cdr stack))))
+                  ((and (eq? state 2) (eq? symbol #\1) (eq? (car stack) #\0))
+                   (make-set (cons 2 (cdr stack))))
+                  ((and (eq? state 2) (empty-string? symbol) (end-symbol? (car stack)))
+                   (make-set (cons 3 (cdr stack))))
+                  (else
+                    (make-set)))))))
 
     ; This PDA recognizes the language of even-sized strings in which
     ; the right half is the reverse of the left half.
@@ -121,23 +123,25 @@
       (make-pda
         0
         (lambda (state) (eq? state 3))
-        (lambda (symbol state stack)
-          (cond ((and (eq? state 0) (empty-string? symbol))
-                 (make-set (cons 1 (cons end-symbol stack))))
-                ((and (eq? state 1) (eq? symbol #\0))
-                 (make-set (cons 1 (cons #\0 stack))))
-                ((and (eq? state 1) (eq? symbol #\1))
-                 (make-set (cons 1 (cons #\1 stack))))
-                ((and (eq? state 1) (empty-string? symbol))
-                 (make-set (cons 2 stack)))
-                ((and (eq? state 2) (eq? symbol #\0) (eq? (car stack) #\0))
-                 (make-set (cons 1 (cdr stack))))
-                ((and (eq? state 2) (eq? symbol #\1) (eq? (car stack) #\1))
-                 (make-set (cons 1 (cdr stack))))
-                ((and (eq? state 2) (empty-string? symbol) (end-symbol? (car stack)))
-                 (make-set (cons 3 (cdr stack))))
-                (else
-                  (make-set))))))
+        (lambda (symbol transition)
+          (let ((state (transition-state transition))
+                (stack (transition-stack transition)))
+            (cond ((and (eq? state 0) (empty-string? symbol))
+                   (make-set (make-transition 1 (cons end-symbol stack))))
+                  ((and (eq? state 1) (eq? symbol #\0))
+                   (make-set (make-transition 1 (cons #\0 stack))))
+                  ((and (eq? state 1) (eq? symbol #\1))
+                   (make-set (make-transition 1 (cons #\1 stack))))
+                  ((and (eq? state 1) (empty-string? symbol))
+                   (make-set (make-transition 2 stack)))
+                  ((and (eq? state 2) (eq? symbol #\0) (eq? (car stack) #\0))
+                   (make-set (make-transition 1 (cdr stack))))
+                  ((and (eq? state 2) (eq? symbol #\1) (eq? (car stack) #\1))
+                   (make-set (make-transition 1 (cdr stack))))
+                  ((and (eq? state 2) (empty-string? symbol) (end-symbol? (car stack)))
+                   (make-set (make-transition 3 (cdr stack))))
+                  (else
+                    (make-set)))))))
 
     ))
 
