@@ -73,7 +73,7 @@
         0
         (lambda (state) (or (eq? state 1) (eq? state 5)))
         (lambda (symbol state)
-          (cond ((and (eq? state 0) (empty? symbol))  (make-set 1 3))
+          (cond ((and (eq? state 0) (empty-string? symbol))  (make-set 1 3))
                 ((and (eq? state 1) (eq? symbol #\0)) (make-set 2))
                 ((and (eq? state 1) (eq? symbol #\1)) (make-set 1))
                 ((and (eq? state 2) (eq? symbol #\0)) (make-set 1))
@@ -85,23 +85,19 @@
                 ((and (eq? state 5) (eq? symbol #\0)) (make-set 5))
                 (else (make-set))))))
 
-    ; This NFA recognizes the language of strings in which every 0 is
-    ; followed by at least one 1.
-    (cons "every-0-followed-by-1"
-      (make-dfa
+    ; This NFA recognizes the language of strings which ends in 1.
+    (cons "ends-in-1"
+      (make-nfa
         0
-        (lambda (state) (eq? state 0))
+        (lambda (state) (eq? state 1))
         (lambda (symbol state)
-          (cond ((and (eq? state 0) (eq? symbol #\0)) 1)
-                ((and (eq? state 0) (eq? symbol #\1)) 0)
-                ((and (eq? state 1) (eq? symbol #\0)) 2)
-                ((and (eq? state 1) (eq? symbol #\1)) 0)
-                ((and (eq? state 2) (eq? symbol #\0)) 2)
-                ((and (eq? state 2) (eq? symbol #\1)) 2)))))
+          (cond ((and (eq? state 0) (eq? symbol #\0)) (make-set 0))
+                ((and (eq? state 0) (eq? symbol #\1)) (make-set 0 1))
+                (else (make-set))))))
 
     ))
 
-; This function prints the result of the application of an automaton on a string.
+; This procedure prints the result of the application of an automaton on a string.
 (define (print-test automaton string)
   (display (car automaton))
   (display " on ")
