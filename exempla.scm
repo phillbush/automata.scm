@@ -6,7 +6,7 @@
 ; Our alphabet are the characters 0 and 1.
 (define strings
   (list
-    "010001"
+    "000001"
     "110100"
     "101101"
     "100001"
@@ -103,9 +103,9 @@
       (make-pda
         0
         (lambda (state) (or (eq? state 0) (eq? state 2)))
-        (lambda (symbol transition)
-          (let ((state (transition-state transition))
-                (stack (transition-stack transition)))
+        (lambda (symbol description)
+          (let ((state (description-state description))
+                (stack (description-stack description)))
             (cond 
                   ((and (eq? state 0) (eq? symbol #\0))
                    (make-set (cons 0 (cons #\0 stack))))
@@ -124,23 +124,36 @@
       (make-pda
         0
         (lambda (state) (eq? state 2))
-        (lambda (symbol transition)
-          (let ((state (transition-state transition))
-                (stack (transition-stack transition)))
+        (lambda (symbol description)
+          (let ((state (description-state description))
+                (stack (description-stack description)))
             (cond ((and (eq? state 0) (eq? symbol #\0))
-                   (make-set (make-transition 0 (cons #\0 stack))))
+                   (make-set (make-description 0 (cons #\0 stack))))
                   ((and (eq? state 0) (eq? symbol #\1))
-                   (make-set (make-transition 0 (cons #\1 stack))))
+                   (make-set (make-description 0 (cons #\1 stack))))
                   ((and (eq? state 0) (empty-string? symbol))
-                   (make-set (make-transition 1 stack)))
+                   (make-set (make-description 1 stack)))
                   ((and (eq? state 1) (eq? symbol #\0) (eq? (car stack) #\0))
-                   (make-set (make-transition 0 (cdr stack))))
+                   (make-set (make-description 0 (cdr stack))))
                   ((and (eq? state 1) (eq? symbol #\1) (eq? (car stack) #\1))
-                   (make-set (make-transition 0 (cdr stack))))
+                   (make-set (make-description 0 (cdr stack))))
                   ((and (eq? state 1) (empty-string? symbol) (end-symbol? (car stack)))
-                   (make-set (make-transition 2 (cdr stack))))
+                   (make-set (make-description 2 (cdr stack))))
                   (else
                     (make-set)))))))
+
+    ; This is an attempt to convert context-free grammars to pushdown
+    ; automata. But it's not working.
+    (cons "n-zeros-n-ones"
+      (cfg->pda
+        (make-cfg #\S
+          (make-rule #\S "0S1" ""))))
+
+    (cons "zeroes-and-one"
+      (cfg->pda
+        (make-cfg #\S
+          (make-rule #\S "0S1" "1")
+          (make-rule #\T "T0" ""))))
 
     ))
 

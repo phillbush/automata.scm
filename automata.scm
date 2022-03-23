@@ -36,9 +36,9 @@
 ; the stack because it is already initialized with it.
 (define (make-pda automaton-initstate automaton-isfinal automaton-transition)
   (list 'pda automaton-initstate automaton-isfinal automaton-transition))
-(define (make-transition state stack) (cons state stack))
-(define (transition-state transition) (car transition))
-(define (transition-stack transition) (cdr transition))
+(define (make-description state stack) (cons state stack))
+(define (description-state description) (car description))
+(define (description-stack description) (cdr description))
 
 ; regular expression constructors and selectors
 (define (make-union left right) (list 'union left right))
@@ -48,6 +48,14 @@
 (define (regexp-arg regexp) (cadr regexp))
 (define (regexp-left regexp) (cadr regexp))
 (define (regexp-right regexp) (caddr regexp))
+
+; context-free grammar constructors and selectors
+(define (make-rule sym . strings) (cons sym strings))
+(define (rule-sym rule) (car rule))
+(define (rule-strings rule) (cdr rule))
+(define (make-cfg start . rules) (cons start rules))
+(define (cfg-start cfg) (car cfg))
+(define (cfg-rules cfg) (cdr cfg))
 
 ; This procedure call a automaton-runner subprocedure depending on the
 ; type of the automaton.  Running an automaton on a string means to test
@@ -91,31 +99,33 @@
   ; nfa-map procedures.
   (define (pda-run)
     (set-any?
-      (lambda (transition)
-        ((automaton-isfinal automaton) (transition-state transition)))
+      (lambda (description)
+        ((automaton-isfinal automaton) (description-state description)))
       (nfa-step
         empty-string
         (fold
           nfa-step
-          (make-set (make-transition (automaton-initstate automaton) (list end-symbol)))
+          (make-set (make-description (automaton-initstate automaton) (list end-symbol)))
           (string->list string)))))
 
   (cond ((eq? (automaton-type automaton) 'dfa) (dfa-run))
         ((eq? (automaton-type automaton) 'nfa) (nfa-run))
         ((eq? (automaton-type automaton) 'pda) (pda-run))))
 
+; regular grammar to nondeterministic finite automaton conversion procedure
 (define (regexp->nfa regexp)
+
   (define (make-prototype initial final transitions) (list initial final transitions))
   (define (prototype-initial prototype) (car prototype))
   (define (prototype-final prototype) (cadr prototype))
   (define (prototype-transitions prototype) (caddr prototype))
-
   (define (make-transition state symbol final) (list state symbol final))
   (define (transition-state transition) (car transition))
   (define (transition-symbol transition) (cadr transition))
   (define (transition-final transition) (caddr transition))
 
   (let ((state-count 0))
+
     (define (rec expr)
       (cond ((or (empty-string? expr) (not (pair? expr)))
              (let ((initial state-count)
@@ -200,3 +210,35 @@
         (prototype-initial prototype)
         (lambda (state) (eq? state (prototype-final prototype)))
         (next (prototype-transitions prototype))))))
+
+; context-free grammar to pushdown automaton conversion procedure
+(define (cfg->pda cfg)
+
+  (define (transition strings stack)
+    (if (null? strings)
+        (make-set)
+        (set-adjoin
+          (transition (cdr strings) stack)
+          (make-description 1 (append (reverse (string->list (car strings))) stack)))))
+
+  (define (transitions rules stack)
+    (cond ((null? rules) (make-set))
+          ((eq? (rule-sym (car rules)) (car stack))
+           (transition (rule-strings (car rules)) (cdr stack)))
+          (else (transitions (cdr rules) stack))))
+
+  (make-pda
+    0
+    (lambda (state) (eq? state 2))
+    (lambda (symbol description)
+      (let ((state (description-state description))
+            (stack (description-stack description)))
+        (cond ((and (eq? state 0) (empty-string? symbol))
+               (make-set (make-description 1 (cons (cfg-start cfg) stack))))
+              ((and (eq? state 1) (empty-string? symbol) (end-symbol? (car stack)))
+               (make-set (make-description 2 (cdr stack))))
+              ((and (eq? state 1) (not (empty-string? symbol)) (eq? symbol (car stack)))
+               (make-set (make-description 1 (cdr stack))))
+              ((and (eq? state 1) (empty-string? symbol))
+               (transitions (cfg-rules cfg) stack))
+              (else (make-set)))))))
