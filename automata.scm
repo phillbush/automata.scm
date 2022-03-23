@@ -1,30 +1,36 @@
 (import (srfi 1)                ; for fold
         (srfi 113))             ; for set, set-union, and set-any
 
-(define (make-set . list) (apply set eq? list))
+(define (make-set . list) (apply set equal? list))
 (define empty-string '())
 (define (empty-string? s) (null? s))
+(define end-symbol #f)
+(define (end-symbol? s) (not s))
 
 ; selectors
 (define (automaton-type automaton) (car automaton))
 (define (automaton-initstate automaton) (cadr automaton))
 (define (automaton-isfinal automaton) (caddr automaton))
-(define (automaton-nextstate automaton) (cadddr automaton))
-(define (automaton-nextstates automaton) (cadddr automaton))
+(define (automaton-transition automaton) (cadddr automaton))
 
 ; A Deterministic Finite Automaton (DFA) is constructed from three
 ; elements:
 ; - An initial state.
 ; - A procedure that determines whether a given state is a final state.
 ; - A procedure that, given a state and a symbol, gets the next state.
-(define (make-dfa automaton-initstate automaton-isfinal automaton-nextstate)
-  (list 'dfa automaton-initstate automaton-isfinal automaton-nextstate))
+(define (make-dfa automaton-initstate automaton-isfinal automaton-transition)
+  (list 'dfa automaton-initstate automaton-isfinal automaton-transition))
 
 ; A Nondeterministic Finite Automaton (NFA) is just like a DFA, but the
-; third element (automaton-nextstates) returns a list of next states given a state
+; third element (automaton-transition) returns a list of next states given a state
 ; and either a symbol or nil.
-(define (make-nfa automaton-initstate automaton-isfinal automaton-nextstates)
-  (list 'nfa automaton-initstate automaton-isfinal automaton-nextstates))
+(define (make-nfa automaton-initstate automaton-isfinal automaton-transition)
+  (list 'nfa automaton-initstate automaton-isfinal automaton-transition))
+
+; A Pushdown Automaton (PDA) is like a NFA, but the third element
+; (automaton-transition) also manages a stack.
+(define (make-pda automaton-initstate automaton-isfinal automaton-transition)
+  (list 'pda automaton-initstate automaton-isfinal automaton-transition))
 
 ; regular expression constructors and selectors
 (define (make-union left right) (list 'union left right))
@@ -42,7 +48,7 @@
 
   (define (dfa-run)
     ((automaton-isfinal automaton)
-     (fold (automaton-nextstate automaton)
+     (fold (automaton-transition automaton)
            (automaton-initstate automaton)
            (string->list string))))
 
@@ -51,8 +57,8 @@
       set-union
       (make-set)
       (set-map
-        eq?
-        (lambda (state) ((automaton-nextstates automaton) symbol state))
+        equal?
+        (lambda (state) ((automaton-transition automaton) symbol state))
         states)))
 
   (define (nfa-step symbol states)
@@ -69,8 +75,34 @@
         (make-set (automaton-initstate automaton))
         (cons empty-string (string->list string)))))
 
+  (define (pda-map symbol transitions)
+    (set-fold
+      set-union
+      (make-set)
+      (set-map
+        equal?
+        (lambda (transition)
+          ((automaton-transition automaton) symbol (car transition) (cdr transition)))
+        transitions)))
+
+  (define (pda-step symbol transitions)
+    (let ((nexttransitions (pda-map symbol transitions)))
+      (if (set-empty? nexttransitions)
+          (make-set)
+          (set-union nexttransitions (pda-step empty-string nexttransitions)))))
+
+  (define (pda-run)
+    (set-any?
+      (lambda (transition)
+        ((automaton-isfinal automaton) (car transition)))
+      (fold
+        pda-step
+        (make-set (cons (automaton-initstate automaton) (list '())))
+        (cons empty-string (string->list string)))))
+
   (cond ((eq? (automaton-type automaton) 'dfa) (dfa-run))
-        ((eq? (automaton-type automaton) 'nfa) (nfa-run))))
+        ((eq? (automaton-type automaton) 'nfa) (nfa-run))
+        ((eq? (automaton-type automaton) 'pda) (pda-run))))
 
 (define (regexp->nfa regexp)
   (define (make-prototype initial final transitions) (list initial final transitions))
