@@ -31,6 +31,9 @@
 ; (automaton-transition) also manages a stack.  We also add some
 ; constructors and selectors to handle a transition (a pair of state
 ; and stack).
+;
+; Note that the PDA does not need to push the end-of-stack symbol onto
+; the stack because it is already initialized with it.
 (define (make-pda automaton-initstate automaton-isfinal automaton-transition)
   (list 'pda automaton-initstate automaton-isfinal automaton-transition))
 (define (make-transition state stack) (cons state stack))
@@ -47,7 +50,7 @@
 (define (regexp-right regexp) (caddr regexp))
 
 ; This procedure call a automaton-runner subprocedure depending on the
-; type of the automaton.  Run an automaton on a string means to test
+; type of the automaton.  Running an automaton on a string means to test
 ; whether the automaton recognizes the string.
 (define (automaton-run automaton string)
 
@@ -94,7 +97,7 @@
         empty-string
         (fold
           nfa-step
-          (make-set (make-transition (automaton-initstate automaton) '()))
+          (make-set (make-transition (automaton-initstate automaton) (list end-symbol)))
           (string->list string)))))
 
   (cond ((eq? (automaton-type automaton) 'dfa) (dfa-run))
