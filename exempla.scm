@@ -142,16 +142,30 @@
                   (else
                     (make-set)))))))
 
+    ; This PDA is created from a context-free grammar which recognizes
+    ; the language of strings composed of n zeroes followed by n ones.
+    ; That is the same language as the one recognized by a PDA before.
     (cons "n-zeros-n-ones"
       (cfg->pda
         (make-cfg #\S
           (make-rule #\S "0S1" ""))))
 
-    (cons "zeroes-and-one"
+    ; This PDA is created from a context-free grammar which recognizes
+    ; the languages which the right half is the reverse of the left one.
+    ; That is the same language as the one recognized by a PDA before.
+    (cons "reverse"
       (cfg->pda
         (make-cfg #\S
-          (make-rule #\S "0T1" "1")
-          (make-rule #\T "T0" ""))))
+          (make-rule #\S "0S0" "1S1" ""))))
+
+    ; ; This PDA is created from a context-free grammar which recognizes
+    ; ; the languages of balanced parentheses (consider 0 as left
+    ; ; parenthesis and 1 as right parenthesis).  It is commented out
+    ; ; because the automaton runs forever.  I don't know why...
+    ; (cons "balanced-parentheses"
+    ;   (cfg->pda
+    ;     (make-cfg #\S
+    ;       (make-rule #\S "SS" "01" "0S1"))))
 
     ))
 
