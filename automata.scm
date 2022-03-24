@@ -50,9 +50,9 @@
 (define (regexp-right regexp) (caddr regexp))
 
 ; context-free grammar constructors and selectors
-(define (make-rule sym . strings) (cons sym strings))
+(define (make-rule sym str) (cons sym str))
 (define (rule-sym rule) (car rule))
-(define (rule-strings rule) (cdr rule))
+(define (rule-str rule) (cdr rule))
 (define (make-cfg start . rules) (cons start rules))
 (define (cfg-start cfg) (car cfg))
 (define (cfg-rules cfg) (cdr cfg))
@@ -214,18 +214,17 @@
 ; context-free grammar to pushdown automaton conversion procedure
 (define (cfg->pda cfg)
 
-  (define (transition strings stack)
-    (if (null? strings)
-        (make-set)
-        (set-adjoin
-          (transition (cdr strings) stack)
-          (make-description 1 (append (string->list (car strings)) stack)))))
-
   (define (transitions rules stack)
-    (cond ((null? rules) (make-set))
-          ((eq? (rule-sym (car rules)) (car stack))
-           (transition (rule-strings (car rules)) (cdr stack)))
-          (else (transitions (cdr rules) stack))))
+    (if (null? rules)
+        (make-set)
+        (let ((sym (rule-sym (car rules)))
+              (str (rule-str (car rules)))
+              (rest (cdr rules)))
+          (if (eq? sym (car stack))
+              (set-adjoin
+                (transitions rest stack)
+                (make-description 1 (append (string->list str) (cdr stack))))
+              (transitions rest stack)))))
 
   (make-pda
     0

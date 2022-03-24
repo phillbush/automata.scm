@@ -6,7 +6,7 @@
 ; Our alphabet are the characters 0 and 1.
 (define strings
   (list
-    "000001"
+    "010000"
     "110100"
     "101101"
     "100001"
@@ -118,27 +118,34 @@
                   (else
                     (make-set)))))))
 
-    ; This PDA recognizes the language of even-sized strings in which
-    ; the right half is the reverse of the left half.
-    (cons "reverse"
+    ; This PDA recognizes the language of strings of the form 0^i+1^j+0^k
+    ; (i zeros, j ones and k zeros), in which i = j or i = k.
+    (cons "i-zeros-j-ones-k-zeros"
       (make-pda
         0
-        (lambda (state) (eq? state 2))
+        (lambda (state) (or (eq? state 2) (eq? state 5)))
         (lambda (symbol description)
           (let ((state (description-state description))
                 (stack (description-stack description)))
             (cond ((and (eq? state 0) (eq? symbol #\0))
                    (make-set (make-description 0 (cons #\0 stack))))
-                  ((and (eq? state 0) (eq? symbol #\1))
-                   (make-set (make-description 0 (cons #\1 stack))))
                   ((and (eq? state 0) (empty-string? symbol))
-                   (make-set (make-description 1 stack)))
-                  ((and (eq? state 1) (eq? symbol #\0) (eq? (car stack) #\0))
-                   (make-set (make-description 0 (cdr stack))))
-                  ((and (eq? state 1) (eq? symbol #\1) (eq? (car stack) #\1))
-                   (make-set (make-description 0 (cdr stack))))
+                   (make-set (make-description 1 stack)
+                             (make-description 3 stack)))
+                  ((and (eq? state 1) (eq? symbol #\1) (eq? (car stack) #\0))
+                   (make-set (make-description 1 (cdr stack))))
                   ((and (eq? state 1) (empty-string? symbol) (end-symbol? (car stack)))
                    (make-set (make-description 2 (cdr stack))))
+                  ((and (eq? state 2) (eq? symbol #\0))
+                   (make-set (make-description 2 stack)))
+                  ((and (eq? state 3) (eq? symbol #\1))
+                   (make-set (make-description 3 stack)))
+                  ((and (eq? state 3) (empty-string? symbol))
+                   (make-set (make-description 4 stack)))
+                  ((and (eq? state 4) (eq? symbol #\0) (eq? (car stack) #\0))
+                   (make-set (make-description 4 (cdr stack))))
+                  ((and (eq? state 4) (empty-string? symbol) (end-symbol? (car stack)))
+                   (make-set (make-description 5 (cdr stack))))
                   (else
                     (make-set)))))))
 
@@ -148,15 +155,18 @@
     (cons "n-zeros-n-ones"
       (cfg->pda
         (make-cfg #\S
-          (make-rule #\S "0S1" ""))))
+          (make-rule #\S "0S1")
+          (make-rule #\S ""))))
 
     ; This PDA is created from a context-free grammar which recognizes
-    ; the languages which the right half is the reverse of the left one.
-    ; That is the same language as the one recognized by a PDA before.
+    ; the languages of even-sized strings in which the right half is the
+    ; reverse of the left one.
     (cons "reverse"
       (cfg->pda
         (make-cfg #\S
-          (make-rule #\S "0S0" "1S1" ""))))
+          (make-rule #\S "0S0")
+          (make-rule #\S "1S1")
+          (make-rule #\S ""))))
 
     ; ; This PDA is created from a context-free grammar which recognizes
     ; ; the languages of balanced parentheses (consider 0 as left
