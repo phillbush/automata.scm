@@ -1,7 +1,18 @@
 (import (srfi 1)                ; for fold
         (srfi 113))             ; for set, set-union, and set-any
 
-(define (make-set . list) (apply set equal? list))
+; a pd-pair is a pair of (state . stack), it is used, along with the
+; current index in the input string, to describe the current state in
+; a pushdown automata.  We compare the state (ie, the cars) of pd-pairs.
+; We use sets to agregate alphabetic symbols (characters), machine
+; states (symbols) and pd-pairs (pairs); therefore, our comparator for
+; make-set should check if the elements are pd-pairs, and compare the
+; cars of both elements, or compare both elements themselves otherwise.
+(define (comparator a b)
+   (if (and (pair? a) (pair? b))
+       (eq? (car a) (car b))
+       (eq? a b)))
+(define (make-set . list) (apply set comparator list))
 (define empty-string '())
 (define (empty-string? s) (null? s))
 (define end-symbol #f)
@@ -36,9 +47,10 @@
 ; the stack because it is already initialized with it.
 (define (make-pda automaton-initstate automaton-isfinal automaton-transition)
   (list 'pda automaton-initstate automaton-isfinal automaton-transition))
-(define (make-description state stack) (cons state stack))
-(define (description-state description) (car description))
-(define (description-stack description) (cdr description))
+(define (pd-pair? pd-pair) (pair? pd-pair))
+(define (make-pd-pair state stack) (cons state stack))
+(define (pd-state pd-pair) (car pd-pair))
+(define (pd-stack pd-pair) (cdr pd-pair))
 
 ; regular expression constructors and selectors
 (define (make-union left right) (list 'union left right))
@@ -68,22 +80,27 @@
            (automaton-initstate automaton)
            (string->list string))))
 
-  (define (nfa-map symbol states)
+  ; a description is either a state or a pd-pair
+  (define (nfa-map symbol descriptions)
     (set-fold
       set-union
       (make-set)
       (set-map
         equal?
-        (lambda (state) ((automaton-transition automaton) symbol state))
-        states)))
+        (lambda (description) ((automaton-transition automaton) symbol description))
+        descriptions)))
 
-  (define (nfa-step symbol states)
+  (define (nfa-step symbol descriptions)
     (if (not (empty-string? symbol))
-        (nfa-map symbol (set-union states (nfa-step empty-string states)))
-        (let ((newstates (nfa-map symbol states)))
-          (if (set-empty? newstates)
-              states
-              (set-union states (nfa-step symbol newstates))))))
+        (nfa-map symbol (set-union descriptions (nfa-step empty-string descriptions)))
+        (let ((newdescriptions (nfa-map symbol descriptions)))
+          (if (set-empty? newdescriptions)
+              descriptions
+              (set-union
+                descriptions
+                (nfa-step
+                  symbol
+                  (set-difference newdescriptions descriptions)))))))
 
   (define (nfa-run)
     (set-any?
@@ -99,13 +116,13 @@
   ; nfa-map procedures.
   (define (pda-run)
     (set-any?
-      (lambda (description)
-        ((automaton-isfinal automaton) (description-state description)))
+      (lambda (pd-pair)
+        ((automaton-isfinal automaton) (pd-state pd-pair)))
       (nfa-step
         empty-string
         (fold
           nfa-step
-          (make-set (make-description (automaton-initstate automaton) (list end-symbol)))
+          (make-set (make-pd-pair (automaton-initstate automaton) (list end-symbol)))
           (string->list string)))))
 
   (cond ((eq? (automaton-type automaton) 'dfa) (dfa-run))
@@ -223,21 +240,21 @@
           (if (eq? sym (car stack))
               (set-adjoin
                 (transitions rest stack)
-                (make-description 1 (append (string->list str) (cdr stack))))
+                (make-pd-pair 1 (append (string->list str) (cdr stack))))
               (transitions rest stack)))))
 
   (make-pda
     0
     (lambda (state) (eq? state 2))
-    (lambda (symbol description)
-      (let ((state (description-state description))
-            (stack (description-stack description)))
+    (lambda (symbol pd-pair)
+      (let ((state (pd-state pd-pair))
+            (stack (pd-stack pd-pair)))
         (cond ((and (eq? state 0) (empty-string? symbol))
-               (make-set (make-description 1 (cons (cfg-start cfg) stack))))
+               (make-set (make-pd-pair 1 (cons (cfg-start cfg) stack))))
               ((and (eq? state 1) (empty-string? symbol) (end-symbol? (car stack)))
-               (make-set (make-description 2 (cdr stack))))
+               (make-set (make-pd-pair 2 (cdr stack))))
               ((and (eq? state 1) (not (empty-string? symbol)) (eq? symbol (car stack)))
-               (make-set (make-description 1 (cdr stack))))
+               (make-set (make-pd-pair 1 (cdr stack))))
               ((and (eq? state 1) (empty-string? symbol))
                (transitions (cfg-rules cfg) stack))
               (else (make-set)))))))

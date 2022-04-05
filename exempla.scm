@@ -6,6 +6,7 @@
 ; Our alphabet are the characters 0 and 1.
 (define strings
   (list
+    "010101"
     "010000"
     "110100"
     "101101"
@@ -103,9 +104,9 @@
       (make-pda
         0
         (lambda (state) (or (eq? state 0) (eq? state 2)))
-        (lambda (symbol description)
-          (let ((state (description-state description))
-                (stack (description-stack description)))
+        (lambda (symbol pd-pair)
+          (let ((state (pd-state pd-pair))
+                (stack (pd-stack pd-pair)))
             (cond 
                   ((and (eq? state 0) (eq? symbol #\0))
                    (make-set (cons 0 (cons #\0 stack))))
@@ -124,28 +125,28 @@
       (make-pda
         0
         (lambda (state) (or (eq? state 2) (eq? state 5)))
-        (lambda (symbol description)
-          (let ((state (description-state description))
-                (stack (description-stack description)))
+        (lambda (symbol pd-pair)
+          (let ((state (pd-state pd-pair))
+                (stack (pd-stack pd-pair)))
             (cond ((and (eq? state 0) (eq? symbol #\0))
-                   (make-set (make-description 0 (cons #\0 stack))))
+                   (make-set (make-pd-pair 0 (cons #\0 stack))))
                   ((and (eq? state 0) (empty-string? symbol))
-                   (make-set (make-description 1 stack)
-                             (make-description 3 stack)))
+                   (make-set (make-pd-pair 1 stack)
+                             (make-pd-pair 3 stack)))
                   ((and (eq? state 1) (eq? symbol #\1) (eq? (car stack) #\0))
-                   (make-set (make-description 1 (cdr stack))))
+                   (make-set (make-pd-pair 1 (cdr stack))))
                   ((and (eq? state 1) (empty-string? symbol) (end-symbol? (car stack)))
-                   (make-set (make-description 2 (cdr stack))))
+                   (make-set (make-pd-pair 2 (cdr stack))))
                   ((and (eq? state 2) (eq? symbol #\0))
-                   (make-set (make-description 2 stack)))
+                   (make-set (make-pd-pair 2 stack)))
                   ((and (eq? state 3) (eq? symbol #\1))
-                   (make-set (make-description 3 stack)))
+                   (make-set (make-pd-pair 3 stack)))
                   ((and (eq? state 3) (empty-string? symbol))
-                   (make-set (make-description 4 stack)))
+                   (make-set (make-pd-pair 4 stack)))
                   ((and (eq? state 4) (eq? symbol #\0) (eq? (car stack) #\0))
-                   (make-set (make-description 4 (cdr stack))))
+                   (make-set (make-pd-pair 4 (cdr stack))))
                   ((and (eq? state 4) (empty-string? symbol) (end-symbol? (car stack)))
-                   (make-set (make-description 5 (cdr stack))))
+                   (make-set (make-pd-pair 5 (cdr stack))))
                   (else
                     (make-set)))))))
 
@@ -168,14 +169,15 @@
           (make-rule #\S "1S1")
           (make-rule #\S ""))))
 
-    ; ; This PDA is created from a context-free grammar which recognizes
-    ; ; the languages of balanced parentheses (consider 0 as left
-    ; ; parenthesis and 1 as right parenthesis).  It is commented out
-    ; ; because the automaton runs forever.  I don't know why...
-    ; (cons "balanced-parentheses"
-    ;   (cfg->pda
-    ;     (make-cfg #\S
-    ;       (make-rule #\S "SS" "01" "0S1"))))
+    ; This PDA is created from a context-free grammar which recognizes
+    ; the languages of balanced parentheses (consider 0 as left
+    ; parenthesis and 1 as right parenthesis).
+    (cons "balanced-parentheses"
+      (cfg->pda
+        (make-cfg #\S
+          (make-rule #\S "SS")
+          (make-rule #\S "01")
+          (make-rule #\S "0S1"))))
 
     ))
 
